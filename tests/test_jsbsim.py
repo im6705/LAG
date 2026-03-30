@@ -92,6 +92,8 @@ class TestSingleControlEnv:
 class TestSingleCombatEnv:
 
     @pytest.mark.parametrize("config", ["1v1/NoWeapon/vsBaseline", "1v1/NoWeapon/Selfplay",
+                                        "1v1/GunsOnlyDogfight/vsBaseline", "1v1/GunsOnlyDogfight/Selfplay",
+                                        "1v1/GunsOnlyDogfight/HierarchySelfplay",
                                         "1v1/DodgeMissile/vsBaseline", "1v1/DodgeMissile/Selfplay",
                                         "1v1/DodgeMissile/HierarchyVsBaseline", "1v1/DodgeMissile/HierarchySelfplay"])
     def test_env(self, config):
@@ -144,7 +146,8 @@ class TestSingleCombatEnv:
                 and np.all(rewards == rew_buf[t]) and np.all(dones == done_buff[t])
             t += 1
 
-    @pytest.mark.parametrize("config", ["1v1/NoWeapon/vsBaseline", "1v1/NoWeapon/Selfplay"])
+    @pytest.mark.parametrize("config", ["1v1/NoWeapon/vsBaseline", "1v1/NoWeapon/Selfplay",
+                                        "1v1/GunsOnlyDogfight/vsBaseline", "1v1/GunsOnlyDogfight/Selfplay"])
     def test_agent_crash(self, config):
         # if no weapon, once enemy die, env terminate!
         env = SingleCombatEnv(config)
@@ -154,6 +157,18 @@ class TestSingleCombatEnv:
         actions = np.array([env.action_space.sample() for _ in range(env.num_agents)])
         obs, rewards, dones, info = env.step(actions)
         assert np.min(rewards) < -100  # crash reward!
+        assert np.all(dones)
+
+    @pytest.mark.parametrize("config", ["1v1/GunsOnlyDogfight/vsBaseline", "1v1/GunsOnlyDogfight/Selfplay"])
+    def test_gun_kill_reward(self, config):
+        env = SingleCombatEnv(config)
+        env.seed(0)
+        env.reset()
+        target_id = env.enm_ids[0]
+        env.agents[target_id].bloods = 0
+        actions = np.array([env.action_space.sample() for _ in range(env.num_agents)])
+        obs, rewards, dones, info = env.step(actions)
+        assert rewards[0][0] > 100
         assert np.all(dones)
 
     @pytest.mark.parametrize("config", ["1v1/DodgeMissile/vsBaseline", "1v1/DodgeMissile/Selfplay"])

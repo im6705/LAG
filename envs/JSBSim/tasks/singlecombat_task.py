@@ -6,7 +6,7 @@ from .task_base import BaseTask
 from ..core.simulatior import AircraftSimulator
 from ..core.catalog import Catalog as c
 from ..termination_conditions import ExtremeState, LowAltitude, Overload, Timeout, SafeReturn
-from ..reward_functions import AltitudeReward, PostureReward, EventDrivenReward
+from ..reward_functions import AltitudeReward, PostureReward, EventDrivenReward, GunKillReward
 from ..utils.utils import get_AO_TA_R, get2d_AO_TA_R, in_range_rad, LLA2NEU, get_root_dir
 from ..model.baseline_actor import BaselineActor
 
@@ -24,6 +24,8 @@ class SingleCombatTask(BaseTask):
             PostureReward(self.config),
             EventDrivenReward(self.config)
         ]
+        if self.use_artillery:
+            self.reward_functions.append(GunKillReward(self.config))
 
         self.termination_conditions = [
             LowAltitude(self.config),
