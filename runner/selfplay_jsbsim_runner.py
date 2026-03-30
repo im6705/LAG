@@ -52,7 +52,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
         self.opponent_rnn_states = np.zeros_like(self.buffer.rnn_states_actor[0])
         self.opponent_masks = np.ones_like(self.buffer.masks[0])
 
-        if self.use_eval:
+        if self.use_eval or self.model_dir is not None:
             self.eval_opponent_policy = Policy(self.all_args, self.obs_space, self.act_space, device=self.device)
 
         logging.info("\n Load selfplay opponents: Algo {}, num_opponents {}.\n"
@@ -306,8 +306,7 @@ class SelfplayJSBSimRunner(JSBSimRunner):
     def render(self):
         idx = self.all_args.render_index
         opponent_idx = self.all_args.render_opponent_index
-        dir_list = str(self.run_dir).split('/')
-        file_path = '/'.join(dir_list[:dir_list.index('results')+1])
+        file_path = str(self.run_dir)
         self.policy.actor.load_state_dict(torch.load(str(self.model_dir)+ f'/actor_{idx}.pt'))
         self.policy.prep_rollout()
         self.eval_opponent_policy.actor.load_state_dict(torch.load(str(self.model_dir) + f'/actor_{opponent_idx}.pt',weights_only=True))
